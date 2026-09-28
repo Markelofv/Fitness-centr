@@ -1,18 +1,19 @@
 # Python
 __pycache__/
 *.py[cod]
-*.so
-
-# Виртуальное окружение
 .venv/
 venv/
 
-# Настройки и секреты
+# Node.js
+node_modules/
+dist/
+
+# Секреты
 .env
 .env.local
 
 # PyCharm
 .idea/
 
-# Базы данных
-*.sqlite3
+# Прочее
+*.log
