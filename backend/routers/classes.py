@@ -2,7 +2,7 @@ from datetime import date, datetime, time
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
-
+from services.class_service import check_schedule_conflicts
 from core import get_current_user, require_role
 from database import get_db
 from schemas import ClassCreate, ClassRead, ClassUpdate
@@ -45,19 +45,25 @@ def get_class(
     return fc
 
 
-@router.post("", response_model=ClassRead, status_code=201)
+@router.post("", response_model=ClassRead, status_code=status.HTTP_201_CREATED)
 def create_class(
     data: ClassCreate,
     db: Session = Depends(get_db),
-    user: User = Depends(require_role("admin", "trainer")),
+    _: User = Depends(require_role("admin", "trainer")),
 ):
-    """Создать занятие. Только admin или trainer."""
-    # Проверка, что тренер существует и является тренером/админом
+    # Проверка, что пользователь-тренер существует
     trainer = db.query(User).filter(User.id == data.trainer_id).first()
     if not trainer:
         raise HTTPException(404, "Тренер не найден")
-    if trainer.role not in ("trainer", "admin"):
-        raise HTTPException(400, "Указанный пользователь не является тренером")
+
+    # ПРОВЕРКА КОНФЛИКТОВ
+    check_schedule_conflicts(
+        db=db,
+        hall=data.hall,
+        trainer_id=data.trainer_id,
+        start_time=data.start_time,
+        duration_min=data.duration_min,
+    )
 
     fc = FitnessClass(**data.model_dump())
     db.add(fc)
@@ -71,14 +77,30 @@ def update_class(
     class_id: int,
     data: ClassUpdate,
     db: Session = Depends(get_db),
-    user: User = Depends(require_role("admin", "trainer")),
+    _: User = Depends(require_role("admin", "trainer")),
 ):
-    """Изменить занятие. Только admin или trainer."""
     fc = db.query(FitnessClass).filter(FitnessClass.id == class_id).first()
     if not fc:
         raise HTTPException(404, "Занятие не найдено")
 
     update_data = data.model_dump(exclude_unset=True)
+
+    # Если меняется время, зал или тренер — проверяем конфликты
+    new_hall = update_data.get("hall", fc.hall)
+    new_trainer = update_data.get("trainer_id", fc.trainer_id)
+    new_time = update_data.get("start_time", fc.start_time)
+    new_duration = update_data.get("duration_min", fc.duration_min)
+
+    if any(k in update_data for k in ["hall", "trainer_id", "start_time", "duration_min"]):
+        check_schedule_conflicts(
+            db=db,
+            hall=new_hall,
+            trainer_id=new_trainer,
+            start_time=new_time,
+            duration_min=new_duration,
+            exclude_class_id=fc.id, # <-- важно! исключаем текущее занятие
+        )
+
     for field, value in update_data.items():
         setattr(fc, field, value)
 
@@ -100,3 +122,16 @@ def delete_class(
 
     db.delete(fc)
     db.commit()
+
+@router.get("/trainer/me", response_model=list[ClassRead])
+def trainer_classes(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role("trainer", "admin")),
+):
+    """Возвращает расписание занятий текущего тренера."""
+    return (
+        db.query(FitnessClass)
+        .filter(FitnessClass.trainer_id == current_user.id)
+        .order_by(FitnessClass.start_time)
+        .all()
+    )

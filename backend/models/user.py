@@ -1,6 +1,6 @@
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
+from sqlalchemy.orm import relationship
 from datetime import datetime
-
-from sqlalchemy import Column, DateTime, Integer, String, Boolean
 from database import Base
 
 
@@ -12,9 +12,12 @@ class User(Base):
     hashed_password = Column(String, nullable=False)
     full_name = Column(String, nullable=False)
     phone = Column(String, nullable=True)
-    role = Column(String, default="client", nullable=False)  # client / trainer / admin
+
+    # Внешний ключ на таблицу roles
+    role_id = Column(Integer, ForeignKey("roles.id"), nullable=False, default=1)
+
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    def __repr__(self):
-        return f"<User {self.email} ({self.role})>"
+    # Связь
+    role = relationship("Role", back_populates="users")

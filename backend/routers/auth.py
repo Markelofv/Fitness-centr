@@ -5,6 +5,7 @@ from core import create_access_token, get_current_user, hash_password, verify_pa
 from database import get_db
 from models.user import User
 from schemas.user import Token, UserCreate, UserLogin, UserRead
+from models.role import Role
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -19,18 +20,19 @@ def register(data: UserCreate, db: Session = Depends(get_db)):
             detail="Email уже зарегистрирован",
         )
 
+    client_role = db.query(Role).filter(Role.name == "client").first()
     user = User(
         email=data.email,
         hashed_password=hash_password(data.password),
         full_name=data.full_name,
         phone=data.phone,
-        role="client",  # по умолчанию — клиент
+        role_id=client_role.id,  # по умолчанию — клиент
     )
     db.add(user)
     db.commit()
     db.refresh(user)
 
-    token = create_access_token({"sub": str(user.id), "role": user.role})
+    token = create_access_token({"sub": str(user.id), "role": user.role.name})
     return Token(access_token=token)
 
 
@@ -50,7 +52,7 @@ def login(data: UserLogin, db: Session = Depends(get_db)):
             detail="Пользователь заблокирован",
         )
 
-    token = create_access_token({"sub": str(user.id), "role": user.role})
+    token = create_access_token({"sub": str(user.id), "role": user.role.name})
     return Token(access_token=token)
 
 

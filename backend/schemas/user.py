@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, EmailStr, ConfigDict
+from pydantic import BaseModel, EmailStr, ConfigDict, field_validator
 
 
 class UserCreate(BaseModel):
@@ -25,6 +25,13 @@ class UserRead(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+    @field_validator("role", mode="before")
+    @classmethod
+    def extract_role_name(cls, v):
+        if hasattr(v, "name"):
+            return v.name
+        return v
 
 
 class Token(BaseModel):
