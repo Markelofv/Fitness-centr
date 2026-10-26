@@ -3,6 +3,7 @@ from schemas.fitness_class import ClassCreate, ClassRead, ClassUpdate
 from schemas.membership import MembershipCreate, MembershipRead
 from schemas.payment import PaymentCreate, PaymentRead, PaymentResult
 from schemas.user import Token, UserCreate, UserLogin, UserRead
+from schemas.admin import ClientRead, ClientDetail, AnalyticsSummary, PopularClass
 
 __all__ = [
     "BookingCreate",
@@ -20,4 +21,8 @@ __all__ = [
     "UserCreate",
     "UserLogin",
     "UserRead",
+    "PopularClass",
+    "AnalyticsSummary",
+    "ClientDetail",
+    "ClientRead",
 ]

@@ -21,3 +21,7 @@ class User(Base):
 
     # Связь
     role = relationship("Role", back_populates="users")
+
+    memberships = relationship("Membership", back_populates="user", cascade="all, delete-orphan")
+    payments = relationship("Payment", back_populates="user", cascade="all, delete-orphan")
+    bookings = relationship("Booking", back_populates="user", cascade="all, delete-orphan")

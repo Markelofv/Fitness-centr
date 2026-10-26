@@ -4,7 +4,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from database import get_db
-from routers import auth, classes, bookings, memberships, payments
+from routers import auth, classes, bookings, memberships, payments, clients, analytics
 
 app = FastAPI(title="Fitness Center API")
 
@@ -22,6 +22,8 @@ app.include_router(classes.router)
 app.include_router(bookings.router)
 app.include_router(memberships.router)
 app.include_router(payments.router)
+app.include_router(clients.router)
+app.include_router(analytics.router)
 
 
 @app.get("/health")
