@@ -4,5 +4,6 @@ from models.fitness_class import FitnessClass
 from models.booking import Booking
 from models.membership import Membership
 from models.payment import Payment
+from models.membership_type import MembershipType
 
-__all__ = ["Role", "User", "FitnessClass", "Booking", "Membership", "Payment"]
+__all__ = ["Role", "User", "FitnessClass", "Booking", "Membership", "Payment", "MembershipType"]

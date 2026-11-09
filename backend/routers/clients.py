@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, joinedload
 from typing import List
-
+from models.booking import Booking
 from core import require_role
 from database import get_db
 from models.user import User
